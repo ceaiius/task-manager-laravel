@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TaskController;
@@ -28,6 +29,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy']);
 });
 
+Route::middleware('auth:sanctum')->group(function () {
+    Route::put('/user/name', [ProfileController::class, 'updateName']);
+    Route::put('/user/password', [ProfileController::class, 'changePassword']);
+});
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
