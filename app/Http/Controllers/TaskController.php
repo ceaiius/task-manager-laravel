@@ -28,7 +28,7 @@ class TaskController extends Controller
             'description' => $request->description,
             'status' => $request->status ?? 'pending',
         ]);
-        return response($task);
+
         return response()->json($task, 201);
     }
 
@@ -51,4 +51,13 @@ class TaskController extends Controller
         $task->delete();
         return response()->json(['message' => 'Task deleted']);
     }
+
+    public function toggleStatus(Task $task)
+    {
+        $task->status = $task->status === 'pending' ? 'completed' : 'pending';
+        $task->save();
+
+        return response()->json(['message' => 'Task status updated successfully', 'task' => $task]);
+    }
+
 }
