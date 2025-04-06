@@ -2,62 +2,81 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreTaskRequest;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\JsonResponse;
 
 class TaskController extends Controller
 {
 
-    public function index()
+    public function index(): JsonResponse
     {
-        return response()->json(Task::where('user_id', Auth::id())->get());
+        $tasks = Task::where('user_id', Auth::id())
+            ->orderByRaw('ISNULL(due_date), due_date ASC')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($tasks);
     }
 
-    public function store(Request $request)
+    public function store(StoreTaskRequest $request): JsonResponse // Use StoreTaskRequest
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'status' => 'in:pending,in_progress,completed',
-        ]);
+
+        $validatedData = $request->validated();
 
         $task = Task::create([
             'user_id' => Auth::id(),
-            'title' => $request->title,
-            'description' => $request->description,
-            'status' => $request->status ?? 'pending',
+            'title' => $validatedData['title'],
+            'description' => $validatedData['description'] ?? null,
+            'due_date' => $validatedData['due_date'] ?? null,
+            'status' => 'pending',
         ]);
 
         return response()->json($task, 201);
     }
 
-    public function update(Request $request, Task $task)
+    public function update(Request $request, Task $task): JsonResponse
     {
+
         if ($task->user_id !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $task->update($request->only(['title', 'description', 'status']));
+        $validatedData = $request->validate([
+            'title' => 'sometimes|required|string|max:255',
+            'description' => 'nullable|string',
+            'status' => 'sometimes|required|in:pending,in_progress,completed',
+            'due_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:today'],
+        ]);
+
+
+        $task->update($validatedData);
+
         return response()->json($task);
     }
 
-    public function destroy(Task $task)
+    public function destroy(Task $task): JsonResponse
     {
         if ($task->user_id !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $task->delete();
-        return response()->json(['message' => 'Task deleted']);
+
+        return response()->json(['message' => 'Task deleted successfully']);
     }
 
-    public function toggleStatus(Task $task)
+    public function toggleStatus(Task $task): JsonResponse
     {
+        if ($task->user_id !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $task->status = $task->status === 'pending' ? 'completed' : 'pending';
         $task->save();
 
         return response()->json(['message' => 'Task status updated successfully', 'task' => $task]);
     }
-
 }
