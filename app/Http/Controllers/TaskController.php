@@ -11,17 +11,25 @@ use Illuminate\Http\JsonResponse;
 class TaskController extends Controller
 {
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $tasks = Task::where('user_id', Auth::id())
-            ->orderByRaw('ISNULL(due_date), due_date ASC')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        
+        $perPage = $request->query('per_page', default: 5); 
 
-        return response()->json($tasks);
+        $tasksQuery = Task::where('user_id', Auth::id())
+            ->orderByRaw('ISNULL(due_date), due_date ASC')
+            ->orderBy('created_at', 'desc');
+
+        if ($request->has('category') && $request->query('category') !== 'all') {
+             $tasksQuery->where('category', $request->query('category'));
+        }
+        $paginatedTasks = $tasksQuery->paginate($perPage);
+
+        return response()->json($paginatedTasks);
     }
 
-    public function store(StoreTaskRequest $request): JsonResponse // Use StoreTaskRequest
+
+    public function store(StoreTaskRequest $request): JsonResponse
     {
 
         $validatedData = $request->validated();
