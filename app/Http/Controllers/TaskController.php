@@ -31,6 +31,7 @@ class TaskController extends Controller
             'title' => $validatedData['title'],
             'description' => $validatedData['description'] ?? null,
             'due_date' => $validatedData['due_date'] ?? null,
+            'category' => $validatedData['category'] ?? null,
             'status' => 'pending',
         ]);
 
@@ -48,6 +49,7 @@ class TaskController extends Controller
             'title' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
             'status' => 'sometimes|required|in:pending,in_progress,completed',
+            'category' => 'nullable|string',
             'due_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:today'],
         ]);
 

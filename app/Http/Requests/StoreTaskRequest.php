@@ -24,6 +24,7 @@ class StoreTaskRequest extends FormRequest
                 'date_format:Y-m-d',
                 'after_or_equal:today'
             ],
+            'category' => ['nullable', 'string'],
 
         ];
     }
